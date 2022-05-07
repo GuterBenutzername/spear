@@ -1,0 +1,2 @@
+# spear
+Simpler PackagE mAnageR
