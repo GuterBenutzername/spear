@@ -2,14 +2,13 @@
 name = "binutils"
 version = "2.38"
 from = "https://ftp.gnu.org/gnu/binutils/binutils-2.38.tar.xz"
-sudo_req = true
 compression_method = "xz"
 after_compression = "binutils-2.38"
-[how_to_install]
-to_run = """
-mkdir -v build
-cd build
-../configure
-make
-make install
-"""
+build_dir = true
+[configure]
+how_to = "../configure --disable-nls --disable-werror"
+[build]
+how_to = "make -j4"
+[install]
+how_to = "make install"
+need_sudo = true

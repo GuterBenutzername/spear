@@ -6,6 +6,7 @@ use glob::glob;
 use serde::Deserialize;
 use spinners::{Spinner, Spinners};
 use std::fs;
+use std::process::Command;
 use std::{collections::HashMap, path::Path};
 
 #[derive(Parser)]
@@ -25,7 +26,9 @@ enum Commands {
 #[derive(Deserialize, Debug)]
 struct Package {
     package_info: PackageInfo,
-    how_to_install: ToInstall,
+    configure: Configure,
+    build: Build,
+    install: Install,
 }
 #[derive(Deserialize, Debug)]
 struct PackageInfo {
@@ -33,13 +36,22 @@ struct PackageInfo {
     version: String,
     from: String,
     deps: Option<HashMap<String, String>>,
-    sudo_req: bool,
+    build_dir: bool,
     compression_method: String,
     after_compression: String,
 }
 #[derive(Deserialize, Debug)]
-struct ToInstall {
-    to_run: String,
+struct Configure {
+    how_to: String,
+}
+#[derive(Deserialize, Debug)]
+struct Build {
+    how_to: String,
+}
+#[derive(Deserialize, Debug)]
+struct Install {
+    how_to: String,
+    need_sudo: bool,
 }
 #[tokio::main]
 async fn main() {
@@ -53,8 +65,6 @@ async fn main() {
         Commands::Install { package } => {
             //Figure out what we are installing.
             let install_file = Path::new(package);
-            
-            let install_file = Path::new("test_packages/binutils.toml");
             let file_as_string =
                 fs::read_to_string(install_file).expect("Couldn't read file; does it exist?");
             let to_install: Package =
@@ -89,7 +99,60 @@ async fn main() {
                 &tarball[0],
             ).expect("Couldn't decompress tarball; was the package file misconfigured?");
             sp.stop_with_message("Done! \n".into());
-            .expect("Couldn't decompress tarball; was the package file misconfigured?");
+
+            // Use TOML file to configure, make, and install code
+            if to_install.package_info.build_dir {
+                fs::create_dir(format!(
+                    "{}/{}/build",
+                    &tarball[0], to_install.package_info.after_compression
+                ))
+                .unwrap(); // no reason to fail here
+            }
+
+            let mut sp = Spinner::with_timer(
+                Spinners::BouncingBar,
+                format!(
+                    "Configuring {}...",
+                    &to_install.package_info.name
+                ),
+            );
+            let mut split_command = to_install
+                .configure
+                .how_to
+                .split(' ')
+                .collect::<Vec<&str>>();
+            let program = split_command[0];
+            split_command.remove(0);
+            if to_install.package_info.build_dir {
+                Command::new(program).args(split_command).current_dir(format!(
+                    "{}/{}/build",
+                    &tarball[0], to_install.package_info.after_compression
+                )).output().expect("Couldn't start configure script; was the package file misconfigured?");
+            
+            }
+            sp.stop_with_message("Done! \n".into());
+
+            let mut sp = Spinner::with_timer(
+                Spinners::BouncingBar,
+                format!(
+                    "Compiling/building {}, this will take a long time :P",
+                    to_install.package_info.name
+                ),
+            );
+            let mut split_command = to_install
+                .build
+                .how_to
+                .split(' ')
+                .collect::<Vec<&str>>();
+            let program = split_command[0];
+            split_command.remove(0);
+            if to_install.package_info.build_dir {
+                Command::new(program).args(split_command).current_dir(format!(
+                    "{}/{}/build",
+                    &tarball[0], to_install.package_info.after_compression
+                )).output().expect("Couldn't start build script; was the package file misconfigured?");
+            
+            }
             sp.stop_with_message("Done! \n".into());
 
         }
