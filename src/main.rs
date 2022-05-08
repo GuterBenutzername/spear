@@ -1,5 +1,11 @@
+mod download;
 use clap::{Parser, Subcommand};
+use glob::glob;
 use serde::Deserialize;
+use spinners::{Spinner, Spinners};
+use std::fs;
+use std::{collections::HashMap, path::Path};
+
 #[derive(Parser)]
 #[clap(author = "Adam Y. Cole II", version = "0.1.0", about = "the Simpler PackagE mAnageR", long_about = None)]
 struct Cli {
@@ -33,7 +39,11 @@ struct PackageInfo {
 struct ToInstall {
     to_run: String,
 }
+#[tokio::main]
 async fn main() {
+    for dir in glob("spear_build_*").unwrap().filter_map(Result::ok) {
+        fs::remove_dir_all(dir).expect("Couldn't remove old temp directories!");
+    }
     let cli = Cli::parse();
 
     match &cli.command {
@@ -49,6 +59,35 @@ async fn main() {
                 "Installing {}, version {}!",
                 to_install.package_info.name, to_install.package_info.version
             );
+
+            let mut sp = Spinner::with_timer(
+                Spinners::BouncingBar,
+                format!(
+                    "Downloading {} from {}... ",
+                    to_install.package_info.name, to_install.package_info.from
+                )
+                .into(),
+            );
+            let tarball = download::download_source_tarball(
+                to_install.package_info.from,
+                to_install.package_info.name,
+            )
+            .await
+            .expect("Could not download tarball; is the url incorrect?");
+            sp.stop_with_message("Done! \n".into());
+            let mut sp = Spinner::with_timer(
+                Spinners::BouncingBar,
+                format!("Extracting {}...", &tarball[1]).into(),
+            );
+            download::extract_source_tarball(
+                to_install.package_info.compression_method,
+                &tarball[1],
+                &tarball[0],
+            )
+            .await
+            .expect("Couldn't decompress tarball; was the package file misconfigured?");
+            sp.stop_with_message("Done! \n".into());
+            
         }
     }
 }

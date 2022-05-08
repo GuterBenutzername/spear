@@ -10,3 +10,10 @@ tokio = { version = "1", features = ["full"] }
 serde = {version = "1.0.137", features = ["derive"]}
 toml = "0.5.9"
 clap = {version = "3.1.17", features = ["derive"]}
+reqwest = "0.11.10"
+flate2 = "1.0"
+bzip2 = "0.4"
+xz2 = "0.1.6"
+spinners = "4.0.0"
+tar = "0.4.38"
+error-chain = "0.12.4"
