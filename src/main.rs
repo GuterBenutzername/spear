@@ -1,4 +1,6 @@
-mod download;
+#![warn(clippy::pedantic)]
+#![allow(dead_code)]
+mod handle_source;
 use clap::{Parser, Subcommand};
 use glob::glob;
 use serde::Deserialize;
@@ -49,6 +51,7 @@ async fn main() {
 
     match &cli.command {
         Commands::Install { package } => {
+            //Figure out what we are installing.
             let install_file = Path::new(package);
             
             let install_file = Path::new("test_packages/binutils.toml");
@@ -61,34 +64,34 @@ async fn main() {
                 to_install.package_info.name, to_install.package_info.version
             );
 
+            //Get our source files into a temporary folder
             let mut sp = Spinner::with_timer(
                 Spinners::BouncingBar,
                 format!(
                     "Downloading {} from {}... ",
                     to_install.package_info.name, to_install.package_info.from
-                )
-                .into(),
+                ),
             );
-            let tarball = download::download_source_tarball(
-                to_install.package_info.from,
-                to_install.package_info.name,
+            let tarball = handle_source::download_source_tarball(
+                &to_install.package_info.from,
+                &to_install.package_info.name,
             )
             .await
             .expect("Could not download tarball; is the url incorrect?");
             sp.stop_with_message("Done! \n".into());
             let mut sp = Spinner::with_timer(
                 Spinners::BouncingBar,
-                format!("Extracting {}...", &tarball[1]).into(),
+                format!("Extracting {}...", &tarball[1]),
             );
-            download::extract_source_tarball(
-                to_install.package_info.compression_method,
+            handle_source::extract_source_tarball(
+                &to_install.package_info.compression_method,
                 &tarball[1],
                 &tarball[0],
-            )
-            .await
+            ).expect("Couldn't decompress tarball; was the package file misconfigured?");
+            sp.stop_with_message("Done! \n".into());
             .expect("Couldn't decompress tarball; was the package file misconfigured?");
             sp.stop_with_message("Done! \n".into());
-            
+
         }
     }
 }

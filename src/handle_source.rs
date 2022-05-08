@@ -14,8 +14,8 @@ error_chain! {
 }
 
 pub async fn download_source_tarball(
-    from_url: String,
-    package_name: String,
+    from_url: &String,
+    package_name: &String,
 ) -> Result<Vec<String>> {
     let path = format!("spear_build_{}", package_name);
     create_dir(&path).unwrap();
@@ -24,7 +24,7 @@ pub async fn download_source_tarball(
     let fname = response
         .url()
         .path_segments()
-        .and_then(|segments| segments.last())
+        .and_then(std::iter::Iterator::last)
         .and_then(|name| if name.is_empty() { None } else { Some(name) })
         .unwrap_or("source.tar");
     let fname = format!("{}/{}", path, fname);
@@ -34,13 +34,13 @@ pub async fn download_source_tarball(
     Ok(vec![path, fname])
 }
 
-pub async fn extract_source_tarball(
-    using: String,
+pub fn extract_source_tarball(
+    using: &str,
     to_decompress: &String,
     to_where: &String,
 ) -> Result<()> {
     let compressed = File::open(&to_decompress)?;
-    let to_unpack = match using.as_str() {
+    let to_unpack = match using {
         "gz" => Box::new(GzDecoder::new(compressed)) as Box<dyn Read>,
         "xz" => Box::new(XzDecoder::new(compressed)) as Box<dyn Read>,
         "bz2" => Box::new(BzDecoder::new(compressed)) as Box<dyn Read>,
