@@ -41,6 +41,7 @@ struct ToInstall {
 }
 #[tokio::main]
 async fn main() {
+    better_panic::install();
     for dir in glob("spear_build_*").unwrap().filter_map(Result::ok) {
         fs::remove_dir_all(dir).expect("Couldn't remove old temp directories!");
     }
