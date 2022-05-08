@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use serde::Deserialize;
 #[derive(Parser)]
 #[clap(author = "Adam Y. Cole II", version = "0.1.0", about = "the Simpler PackagE mAnageR", long_about = None)]
 struct Cli {
@@ -37,6 +38,17 @@ async fn main() {
 
     match &cli.command {
         Commands::Install { package } => {
+            let install_file = Path::new(package);
+            
+            let install_file = Path::new("test_packages/binutils.toml");
+            let file_as_string =
+                fs::read_to_string(install_file).expect("Couldn't read file; does it exist?");
+            let to_install: Package =
+                toml::from_str(&file_as_string).expect("Couldn't parse TOML; is it valid?");
+            println!(
+                "Installing {}, version {}!",
+                to_install.package_info.name, to_install.package_info.version
+            );
         }
     }
 }
