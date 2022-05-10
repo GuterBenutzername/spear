@@ -97,7 +97,8 @@ async fn main() {
                 &to_install.package_info.compression_method,
                 &tarball[1],
                 &tarball[0],
-            ).expect("Couldn't decompress tarball; was the package file misconfigured?");
+            )
+            .expect("Couldn't decompress tarball; was the package file misconfigured?");
             sp.stop_with_message("Done! \n".into());
 
             // Use TOML file to configure, make, and install code
@@ -111,10 +112,7 @@ async fn main() {
 
             let mut sp = Spinner::with_timer(
                 Spinners::BouncingBar,
-                format!(
-                    "Configuring {}...",
-                    &to_install.package_info.name
-                ),
+                format!("Configuring {}...", &to_install.package_info.name),
             );
             let mut split_command = to_install
                 .configure
@@ -124,11 +122,14 @@ async fn main() {
             let program = split_command[0];
             split_command.remove(0);
             if to_install.package_info.build_dir {
-                Command::new(program).args(split_command).current_dir(format!(
-                    "{}/{}/build",
-                    &tarball[0], to_install.package_info.after_compression
-                )).output().expect("Couldn't start configure script; was the package file misconfigured?");
-            
+                Command::new(program)
+                    .args(split_command)
+                    .current_dir(format!(
+                        "{}/{}/build",
+                        &tarball[0], to_install.package_info.after_compression
+                    ))
+                    .output()
+                    .expect("Couldn't start configure script; was the package file misconfigured?");
             }
             sp.stop_with_message("Done! \n".into());
 
@@ -139,22 +140,20 @@ async fn main() {
                     to_install.package_info.name
                 ),
             );
-            let mut split_command = to_install
-                .build
-                .how_to
-                .split(' ')
-                .collect::<Vec<&str>>();
+            let mut split_command = to_install.build.how_to.split(' ').collect::<Vec<&str>>();
             let program = split_command[0];
             split_command.remove(0);
             if to_install.package_info.build_dir {
-                Command::new(program).args(split_command).current_dir(format!(
-                    "{}/{}/build",
-                    &tarball[0], to_install.package_info.after_compression
-                )).output().expect("Couldn't start build script; was the package file misconfigured?");
-            
+                Command::new(program)
+                    .args(split_command)
+                    .current_dir(format!(
+                        "{}/{}/build",
+                        &tarball[0], to_install.package_info.after_compression
+                    ))
+                    .output()
+                    .expect("Couldn't start build script; was the package file misconfigured?");
             }
             sp.stop_with_message("Done! \n".into());
-
         }
     }
 }

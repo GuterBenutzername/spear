@@ -1,9 +1,9 @@
 use bzip2::read::BzDecoder;
 use error_chain::error_chain;
 use flate2::read::GzDecoder;
-use tar::Archive;
 use std::fs::{create_dir, File};
-use std::io::{copy, Read, Cursor};
+use std::io::{copy, Cursor, Read};
+use tar::Archive;
 use xz2::read::XzDecoder;
 
 error_chain! {
